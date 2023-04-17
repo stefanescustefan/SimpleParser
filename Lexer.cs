@@ -36,29 +36,39 @@ namespace Parser
         public char op;
     }
 
+    struct IdentifierToken : IToken
+    {
+        public IdentifierToken(string id)
+        {
+            identifier = id;
+        }
+
+        public override string ToString()
+        {
+            return "Identifier: " + identifier;
+        }
+
+        public string identifier;
+    }
+
     internal class Lexer
     {
         public Lexer(string expression) {
             this.expression = expression.Trim();
             valueRegex = new Regex(@"\G\d+(\.\d*)?", RegexOptions.Compiled);
+            identifierRegex = new Regex(@"\G[A-Za-z]+([A-Za-z]|\d)*", RegexOptions.Compiled);
 
             currentPos = 0;
         }
 
         public IToken GetToken()
         {
-            IToken nextToken;
-            currentPos += RetrieveNextToken(out nextToken);
-
-            return nextToken;
+            return RetrieveNextToken(true);
         }
 
         public IToken PeekToken()
         {
-            IToken nextToken;
-            RetrieveNextToken(out nextToken);
-
-            return nextToken;
+            return RetrieveNextToken();
         }
 
         public bool IsEmpty()
@@ -66,7 +76,7 @@ namespace Parser
             return currentPos >= expression.Length;
         }
 
-        private int RetrieveNextToken(out IToken nextToken)
+        private IToken RetrieveNextToken(bool consume=false)
         {
             while (currentPos < expression.Length && expression[currentPos] == ' ')
                 currentPos++;
@@ -74,27 +84,42 @@ namespace Parser
             if (currentPos >= expression.Length)
                 throw new Exception("End of expression reached");
 
+            IToken nextToken;
             if (operations.Contains(expression[currentPos]))
             {
                 nextToken = new OperatorToken(expression[currentPos]);
-                return 1;
+                if (consume)
+                    currentPos++;
             }
             else if (valueRegex.IsMatch(expression, currentPos))
             {
                 Match match = valueRegex.Match(expression, currentPos);
                 nextToken = new ValueToken(Double.Parse(match.Value));
-                return match.Length;
+
+                if (consume)
+                    currentPos += match.Length;
+            }
+            else if (identifierRegex.IsMatch(expression, currentPos))
+            {
+                Match match = identifierRegex.Match(expression, currentPos);
+                nextToken = new IdentifierToken(match.Value);
+
+                if (consume)
+                    currentPos += match.Length;
             }
             else
             {
                 throw new Exception("Unrecognized symbol: " + expression[currentPos]);
             }
+
+            return nextToken;
         }
 
         private int currentPos;
         private string expression;
 
         private Regex valueRegex;
+        private Regex identifierRegex;
         private readonly char[] operations = { '+', '-', '*', '/', '(', ')' };
     }
 }
