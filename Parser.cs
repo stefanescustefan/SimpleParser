@@ -33,7 +33,7 @@ namespace Parser
             while (operatorStack.Count > 0)
             {
                 if (operatorStack.Peek() == '(')
-                    throw new Exception("Too many left parantheses");
+                    throw new Exception("Parser: Too many left parantheses");
 
                 HandleOperator(valueStack, operatorStack.Pop());
             }
@@ -48,7 +48,7 @@ namespace Parser
                 case '+': case '-': return 0;
                 case '*': case '/': return 1;
                 case 'n': return 2;
-                default: throw new Exception("Invalid operator passed to Precedence(): " + op);
+                default: throw new Exception("Parser: Invalid operator passed to Precedence(): " + op);
             }
         }
 
@@ -57,14 +57,14 @@ namespace Parser
             if (op == 'n')
             {
                 if (valueStack.Count < 1)
-                    throw new Exception("Not enough operands for unary '-'");
+                    throw new Exception("Parser: Not enough operands for unary '-'");
 
                 valueStack.Push(new SyntaxNodeUnaryOperator(UnaryOperator.Minus, valueStack.Pop()));
             }
             else
             {
                 if (valueStack.Count < 2)
-                    throw new Exception("Not enough operands for '" + op + "'");
+                    throw new Exception("Parser: Not enough operands for '" + op + "'");
 
                 ISyntaxNode b = valueStack.Pop();
                 ISyntaxNode a = valueStack.Pop();
@@ -76,7 +76,7 @@ namespace Parser
                     case '-': binaryOp = BinaryOperator.Minus; break;
                     case '*': binaryOp = BinaryOperator.Times; break;
                     case '/': binaryOp = BinaryOperator.Divide; break;
-                    default: throw new Exception("Invalid operator: '" + op + "'");
+                    default: throw new Exception("Parser: Invalid operator: '" + op + "'");
                 }
 
                 valueStack.Push(new SyntaxNodeBinaryOperator(binaryOp, a, b));
@@ -89,7 +89,7 @@ namespace Parser
             if (token.Operator == '(')
             {
                 if (state == ParserState.ExpectOperator)
-                    throw new Exception("Expected operator but found: '('");
+                    throw new Exception("Parser: Expected operator but found: '('");
 
                 operatorStack.Push(token.Operator);
                 state = ParserState.ExpectOperandOrUnary;
@@ -97,7 +97,7 @@ namespace Parser
             else if (token.Operator == ')')
             {
                 if (state != ParserState.ExpectOperator)
-                    throw new Exception("Expected operand but found: ')'");
+                    throw new Exception("Parser: Expected operand but found: ')'");
 
                 while (operatorStack.Count > 0 && operatorStack.Peek() != '(')
                 {
@@ -105,7 +105,7 @@ namespace Parser
                 }
 
                 if (operatorStack.Count == 0 || operatorStack.Peek() != '(')
-                    throw new Exception("Too many right parantheses");
+                    throw new Exception("Parser: Too many right parantheses");
                 else
                     operatorStack.Pop();
             }
@@ -117,7 +117,7 @@ namespace Parser
             else
             {
                 if (state != ParserState.ExpectOperator)
-                    throw new Exception("Expected operand but found: '" + token.Operator + "'");
+                    throw new Exception("Parser: Expected operand but found: '" + token.Operator + "'");
 
                 while (operatorStack.Count > 0 && operatorStack.Peek() != '(' &&
                 Precedence(operatorStack.Peek()) >= Precedence(token.Operator))
@@ -142,7 +142,7 @@ namespace Parser
         private static void HandleIdentifierToken(Stack<ISyntaxNode> valueStack, ref ParserState state, IdentifierToken token)
         {
             if (state == ParserState.ExpectOperator)
-                throw new Exception("Expected operator but found: '" + token.Identifier + "'");
+                throw new Exception("Parser: Expected operator but found: '" + token.Identifier + "'");
 
             valueStack.Push(new SyntaxNodeIdentifier(token.Identifier));
             state = ParserState.ExpectOperator;

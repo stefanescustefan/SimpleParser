@@ -87,7 +87,7 @@ namespace Parser
                 currentPos++;
 
             if (currentPos >= expression.Length)
-                throw new Exception("End of expression reached");
+                throw new Exception("Lexer: End reached when trying to retrieve token.");
 
             IToken nextToken;
             if (operations.Contains(expression[currentPos]))
@@ -114,7 +114,7 @@ namespace Parser
             }
             else
             {
-                throw new Exception("Unrecognized symbol: " + expression[currentPos]);
+                throw new Exception("Lexer: unrecognized symbol: " + expression[currentPos]);
             }
 
             return nextToken;
