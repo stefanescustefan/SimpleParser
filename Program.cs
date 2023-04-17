@@ -14,10 +14,12 @@ namespace Parser
                 if (input == "q")
                     break;
 
-                Parser parser = new Parser(input);
+                Lexer lexer = new Lexer(input);
+
                 try
                 {
-                    Console.WriteLine("=" + parser.Evaluate());
+                    ISyntaxNode root = Parser.BuildSyntaxTree(lexer);
+                    SyntaxTree.PrintSyntaxTree(root);
                 }
                 catch(Exception e)
                 {

@@ -5,21 +5,16 @@ namespace Parser
 {
     internal class Parser
     {
-        public Parser(string expression) 
-        {
-            _lexer = new Lexer(expression);
-        }
-
-        public double Evaluate()
+        public static ISyntaxNode BuildSyntaxTree(Lexer lexer)
         {
             Stack<char> operatorStack = new Stack<char>();
-            Stack<double> valueStack = new Stack<double>();
+            Stack<ISyntaxNode> valueStack = new Stack<ISyntaxNode>();
 
             ParserState state = ParserState.ExpectOperandOrUnary;
 
-            while (!_lexer.IsEmpty())
+            while (!lexer.IsEmpty())
             {
-                IToken token = _lexer.GetToken();
+                IToken token = lexer.GetToken();
                 
                 if (token is ValueToken valToken)
                 {
@@ -29,16 +24,16 @@ namespace Parser
                 {
                     HandleOperatorToken(operatorStack, valueStack, ref state, operatorToken);
                 }
-                else
+                else if (token is IdentifierToken identifierToken)
                 {
-                    throw new Exception("Cannot evaluate an expression containing abstract identifiers");
+                    HandleIdentifierToken(valueStack, ref state, identifierToken);
                 }
             }
 
             while (operatorStack.Count > 0)
             {
                 if (operatorStack.Peek() == '(')
-                    throw new Exception("Mismatched paranthesis");
+                    throw new Exception("Too many left parantheses");
 
                 HandleOperator(valueStack, operatorStack.Pop());
             }
@@ -57,40 +52,38 @@ namespace Parser
             }
         }
 
-        private static void HandleOperator(Stack<double> valueStack, char op)
+        private static void HandleOperator(Stack<ISyntaxNode> valueStack, char op)
         {
             if (op == 'n')
             {
                 if (valueStack.Count < 1)
                     throw new Exception("Not enough operands for unary '-'");
 
-                valueStack.Push(-valueStack.Pop());
+                valueStack.Push(new SyntaxNodeUnaryOperator(UnaryOperator.Minus, valueStack.Pop()));
             }
             else
             {
                 if (valueStack.Count < 2)
                     throw new Exception("Not enough operands for '" + op + "'");
 
-                double b = valueStack.Pop();
-                double a = valueStack.Pop();
+                ISyntaxNode b = valueStack.Pop();
+                ISyntaxNode a = valueStack.Pop();
 
+                BinaryOperator binaryOp;
                 switch (op)
                 {
-                    case '+': valueStack.Push(a + b); break;
-                    case '-': valueStack.Push(a - b); break;
-                    case '*': valueStack.Push(a * b); break;
-                    case '/':
-                        {
-                            if (b == 0) throw new Exception("Division by zero");
-                            
-                            valueStack.Push(a / b); break;
-                        }
+                    case '+': binaryOp = BinaryOperator.Plus; break;
+                    case '-': binaryOp = BinaryOperator.Minus; break;
+                    case '*': binaryOp = BinaryOperator.Times; break;
+                    case '/': binaryOp = BinaryOperator.Divide; break;
                     default: throw new Exception("Invalid operator: '" + op + "'");
                 }
+
+                valueStack.Push(new SyntaxNodeBinaryOperator(binaryOp, a, b));
             }
         }
 
-        private static void HandleOperatorToken(Stack<char> operatorStack, Stack<double> valueStack, 
+        private static void HandleOperatorToken(Stack<char> operatorStack, Stack<ISyntaxNode> valueStack, 
             ref ParserState state, OperatorToken token)
         {
             if (token.Operator == '(')
@@ -137,12 +130,21 @@ namespace Parser
             }
         }
 
-        private static void HandleValueToken(Stack<double> valueStack, ref ParserState state, ValueToken token)
+        private static void HandleValueToken(Stack<ISyntaxNode> valueStack, ref ParserState state, ValueToken token)
         {
             if (state == ParserState.ExpectOperator)
                 throw new Exception("Expected operator but found: '" + token.Value + "'");
 
-            valueStack.Push(token.Value);
+            valueStack.Push(new SyntaxNodeValue(token.Value));
+            state = ParserState.ExpectOperator;
+        }
+
+        private static void HandleIdentifierToken(Stack<ISyntaxNode> valueStack, ref ParserState state, IdentifierToken token)
+        {
+            if (state == ParserState.ExpectOperator)
+                throw new Exception("Expected operator but found: '" + token.Identifier + "'");
+
+            valueStack.Push(new SyntaxNodeIdentifier(token.Identifier));
             state = ParserState.ExpectOperator;
         }
 
@@ -152,7 +154,5 @@ namespace Parser
             ExpectOperandOrUnary,
             ExpectOperator,
         }
-
-        private Lexer _lexer;
     }
 }
