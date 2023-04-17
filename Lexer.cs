@@ -10,45 +10,45 @@ namespace Parser
     {
         public ValueToken(double v)
         {
-            this.v = v;
+            this.Value = v;
         }
 
         public override string ToString()
         {
-            return "Value: " + v.ToString();
+            return "Value: " + Value.ToString();
         }
 
-        public double v;
+        public double Value;
     }
 
     struct OperatorToken : IToken
     {
         public OperatorToken(char c)
         {
-            op = c;
+            Operator = c;
         }
 
         public override string ToString()
         {
-            return "Operator: " + op;
+            return "Operator: " + Operator;
         }
 
-        public char op;
+        public char Operator;
     }
 
     struct IdentifierToken : IToken
     {
         public IdentifierToken(string id)
         {
-            identifier = id;
+            Identifier = id;
         }
 
         public override string ToString()
         {
-            return "Identifier: " + identifier;
+            return "Identifier: " + Identifier;
         }
 
-        public string identifier;
+        public string Identifier;
     }
 
     internal class Lexer
@@ -69,6 +69,11 @@ namespace Parser
         public IToken PeekToken()
         {
             return RetrieveNextToken();
+        }
+
+        public void Reset()
+        {
+            currentPos = 0;
         }
 
         public bool IsEmpty()

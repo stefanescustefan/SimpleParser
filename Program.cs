@@ -8,14 +8,23 @@ namespace Parser
     {
         static void Main(string[] args)
         {
-            string input = Console.ReadLine();
-            Lexer lexer = new Lexer(input);
-            while(!lexer.IsEmpty())
+            while (true)
             {
-                Console.WriteLine(lexer.GetToken());
-            }
+                string input = Console.ReadLine();
+                if (input == "q")
+                    break;
 
-            Console.ReadKey();
+                Parser parser = new Parser(input);
+                try
+                {
+                    Console.WriteLine("=" + parser.Evaluate());
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+            
         }
     }
 }
