@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Parser
 {
@@ -7,7 +8,14 @@ namespace Parser
     {
         static void Main(string[] args)
         {
+            string input = Console.ReadLine();
+            Lexer lexer = new Lexer(input);
+            while(!lexer.IsEmpty())
+            {
+                Console.WriteLine(lexer.GetToken());
+            }
 
+            Console.ReadKey();
         }
     }
 }
