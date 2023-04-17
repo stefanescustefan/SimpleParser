@@ -29,6 +29,10 @@ namespace Parser
                 {
                     HandleOperatorToken(operatorStack, valueStack, ref state, operatorToken);
                 }
+                else
+                {
+                    throw new Exception("Cannot evaluate an expression containing abstract identifiers");
+                }
             }
 
             while (operatorStack.Count > 0)
@@ -75,7 +79,12 @@ namespace Parser
                     case '+': valueStack.Push(a + b); break;
                     case '-': valueStack.Push(a - b); break;
                     case '*': valueStack.Push(a * b); break;
-                    case '/': valueStack.Push(a / b); break;
+                    case '/':
+                        {
+                            if (b == 0) throw new Exception("Division by zero");
+                            
+                            valueStack.Push(a / b); break;
+                        }
                     default: throw new Exception("Invalid operator: '" + op + "'");
                 }
             }
