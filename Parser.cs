@@ -5,66 +5,9 @@ namespace Parser
 {
     internal class Parser
     {
-        private enum OperatorType
-        {
-            Plus,
-            Minus,
-            Times,
-            Divide,
-
-            UnaryMinus,
-
-            LeftParanthesis,
-            RightParanthesis,
-
-            FuncName
-        }
-        private static OperatorType GetOperatorType(char op)
-        {
-            return op switch
-            {
-                '+' => OperatorType.Plus,
-                '-' => OperatorType.Minus,
-                '*' => OperatorType.Times,
-                '/' => OperatorType.Divide,
-                '(' => OperatorType.LeftParanthesis,
-                ')' => OperatorType.RightParanthesis,
-                _ => throw new ArgumentException("Invalid operator: " + op)
-            };
-        }
-
-        private readonly record struct Operator
-        {
-            public Operator(OperatorType type)
-            {
-                if (type == OperatorType.FuncName)
-                    throw new ArgumentException("A function operator must have a name!");
-
-                Type = type;
-                FuncName = null;
-            }
-
-            public Operator(String identifier)
-            {
-                Type = OperatorType.FuncName;
-                FuncName = identifier;
-            }
-
-            public string GetFuncName()
-            {
-                if (Type != OperatorType.FuncName)
-                    throw new FieldAccessException("Only function operators have names!");
-
-                return FuncName;
-            }
-
-            readonly public OperatorType Type;
-            readonly private string FuncName;
-        }
-        
         public static ISyntaxNode BuildSyntaxTree(Lexer lexer)
         {
-            Stack<Operator> operatorStack = new Stack<Operator>();
+            Stack<char> operatorStack = new Stack<char>();
             Stack<ISyntaxNode> valueStack = new Stack<ISyntaxNode>();
 
             ParserState state = ParserState.ExpectOperandOrUnary;
@@ -89,7 +32,7 @@ namespace Parser
 
             while (operatorStack.Count > 0)
             {
-                if (operatorStack.Peek().Type == OperatorType.LeftParanthesis)
+                if (operatorStack.Peek() == '(')
                     throw new Exception("Parser: Too many left parantheses");
 
                 HandleOperator(valueStack, operatorStack.Pop());
@@ -98,20 +41,20 @@ namespace Parser
             return valueStack.Peek();
         }
 
-        private static int Precedence(OperatorType opType)
+        private static int Precedence(char op)
         {
-            switch (opType) 
+            switch (op) 
             {
-                case OperatorType.Plus: case OperatorType.Minus: return 0;
-                case OperatorType.Times: case OperatorType.Divide: return 1;
-                case OperatorType.UnaryMinus: return 2;
-                default: throw new ArgumentException("Parser: Invalid operator type passed to Precedence(): " + opType);
+                case '+': case '-': return 0;
+                case '*': case '/': return 1;
+                case 'n': return 2;
+                default: throw new Exception("Parser: Invalid operator passed to Precedence(): " + op);
             }
         }
 
-        private static void HandleOperator(Stack<ISyntaxNode> valueStack, Operator op)
+        private static void HandleOperator(Stack<ISyntaxNode> valueStack, char op)
         {
-            if (op.Type == OperatorType.UnaryMinus)
+            if (op == 'n')
             {
                 if (valueStack.Count < 1)
                     throw new Exception("Parser: Not enough operands for unary '-'");
@@ -127,12 +70,12 @@ namespace Parser
                 ISyntaxNode a = valueStack.Pop();
 
                 BinaryOperator binaryOp;
-                switch (op.Type)
+                switch (op)
                 {
-                    case OperatorType.Plus: binaryOp = BinaryOperator.Plus; break;
-                    case OperatorType.Minus: binaryOp = BinaryOperator.Minus; break;
-                    case OperatorType.Times: binaryOp = BinaryOperator.Times; break;
-                    case OperatorType.Divide: binaryOp = BinaryOperator.Divide; break;
+                    case '+': binaryOp = BinaryOperator.Plus; break;
+                    case '-': binaryOp = BinaryOperator.Minus; break;
+                    case '*': binaryOp = BinaryOperator.Times; break;
+                    case '/': binaryOp = BinaryOperator.Divide; break;
                     default: throw new Exception("Parser: Invalid operator: '" + op + "'");
                 }
 
@@ -140,7 +83,7 @@ namespace Parser
             }
         }
 
-        private static void HandleOperatorToken(Stack<Operator> operatorStack, Stack<ISyntaxNode> valueStack, 
+        private static void HandleOperatorToken(Stack<char> operatorStack, Stack<ISyntaxNode> valueStack, 
             ref ParserState state, OperatorToken token)
         {
             if (token.Operator == '(')
@@ -148,7 +91,7 @@ namespace Parser
                 if (state == ParserState.ExpectOperator)
                     throw new Exception("Parser: Expected operator but found: '('");
 
-                operatorStack.Push(new Operator(OperatorType.LeftParanthesis));
+                operatorStack.Push(token.Operator);
                 state = ParserState.ExpectOperandOrUnary;
             }
             else if (token.Operator == ')')
@@ -156,19 +99,19 @@ namespace Parser
                 if (state != ParserState.ExpectOperator)
                     throw new Exception("Parser: Expected operand but found: ')'");
 
-                while (operatorStack.Count > 0 && operatorStack.Peek().Type != OperatorType.LeftParanthesis)
+                while (operatorStack.Count > 0 && operatorStack.Peek() != '(')
                 {
                     HandleOperator(valueStack, operatorStack.Pop());
                 }
 
-                if (operatorStack.Count == 0 || operatorStack.Peek().Type != OperatorType.LeftParanthesis)
+                if (operatorStack.Count == 0 || operatorStack.Peek() != '(')
                     throw new Exception("Parser: Too many right parantheses");
                 else
                     operatorStack.Pop();
             }
             else if (token.Operator == '-' && state == ParserState.ExpectOperandOrUnary)
             {
-                operatorStack.Push(new Operator(OperatorType.UnaryMinus));
+                operatorStack.Push('n');
                 state = ParserState.ExpectOperand;
             }
             else
@@ -176,13 +119,13 @@ namespace Parser
                 if (state != ParserState.ExpectOperator)
                     throw new Exception("Parser: Expected operand but found: '" + token.Operator + "'");
 
-                while (operatorStack.Count > 0 && operatorStack.Peek().Type != OperatorType.LeftParanthesis &&
-                Precedence(operatorStack.Peek().Type) >= Precedence(GetOperatorType(token.Operator)))
+                while (operatorStack.Count > 0 && operatorStack.Peek() != '(' &&
+                Precedence(operatorStack.Peek()) >= Precedence(token.Operator))
                 {
                     HandleOperator(valueStack, operatorStack.Pop());
                 }
 
-                operatorStack.Push(new Operator(GetOperatorType(token.Operator)));
+                operatorStack.Push(token.Operator);
                 state = ParserState.ExpectOperandOrUnary;
             }
         }

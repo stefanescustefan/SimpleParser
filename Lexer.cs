@@ -4,10 +4,52 @@ using System.Text.RegularExpressions;
 
 namespace Parser
 {
-    interface IToken { }
-    readonly record struct ValueToken(double Value) : IToken;
-    readonly record struct OperatorToken(char Operator) : IToken;
-    readonly record struct IdentifierToken(string Identifier) : IToken;
+    interface IToken {}
+
+    struct ValueToken : IToken
+    {
+        public ValueToken(double v)
+        {
+            this.Value = v;
+        }
+
+        public override string ToString()
+        {
+            return "Value: " + Value.ToString();
+        }
+
+        public double Value;
+    }
+
+    struct OperatorToken : IToken
+    {
+        public OperatorToken(char c)
+        {
+            Operator = c;
+        }
+
+        public override string ToString()
+        {
+            return "Operator: " + Operator;
+        }
+
+        public char Operator;
+    }
+
+    struct IdentifierToken : IToken
+    {
+        public IdentifierToken(string id)
+        {
+            Identifier = id;
+        }
+
+        public override string ToString()
+        {
+            return "Identifier: " + Identifier;
+        }
+
+        public string Identifier;
+    }
 
     internal class Lexer
     {
