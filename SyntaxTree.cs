@@ -18,63 +18,15 @@ namespace Parser
         Minus
     }
 
-    struct SyntaxNodeValue: ISyntaxNode
-    {
-        public SyntaxNodeValue(double v)
-        {
-            Value = v;
-        }
+    readonly record struct SyntaxNodeValue(double Value): ISyntaxNode;
 
-        public double Value;
-    }
+    readonly record struct SyntaxNodeBinaryOperator(BinaryOperator Operator, ISyntaxNode Operand1, ISyntaxNode Operand2): ISyntaxNode;
 
-    struct SyntaxNodeBinaryOperator: ISyntaxNode
-    {
-        public SyntaxNodeBinaryOperator(BinaryOperator op, ISyntaxNode operand1, ISyntaxNode operand2)
-        {
-            Operator = op;
-            Operand1 = operand1;
-            Operand2 = operand2;
-        }
+    readonly record struct SyntaxNodeUnaryOperator(UnaryOperator Operator, ISyntaxNode Operand): ISyntaxNode;
 
-        public BinaryOperator Operator;
-        public ISyntaxNode Operand1;
-        public ISyntaxNode Operand2;
-    }
+    readonly record struct SyntaxNodeIdentifier(string Name): ISyntaxNode;
 
-    struct SyntaxNodeUnaryOperator: ISyntaxNode
-    {
-        public SyntaxNodeUnaryOperator(UnaryOperator op, ISyntaxNode operand)
-        {
-            Operator = op;
-            Operand = operand;
-        }
-
-        public UnaryOperator Operator;
-        public ISyntaxNode Operand;
-    }
-
-    struct SyntaxNodeIdentifier: ISyntaxNode
-    {
-        public SyntaxNodeIdentifier(string name)
-        {
-            Name = name;
-        }
-
-        public string Name;
-    }
-
-    struct SyntaxNodeFunctionCall: ISyntaxNode
-    {
-        public SyntaxNodeFunctionCall(SyntaxNodeIdentifier functionIdentifier, List<ISyntaxNode> functionArguments)
-        {
-            FunctionIdentifier = functionIdentifier;
-            FunctionArguments = functionArguments;
-        }
-
-        public SyntaxNodeIdentifier FunctionIdentifier;
-        public List<ISyntaxNode> FunctionArguments;
-    }
+    readonly record struct SyntaxNodeFunctionCall(SyntaxNodeIdentifier FunctionIdentifier, List<ISyntaxNode> FunctionArguments): ISyntaxNode;
 
     class SyntaxTree
     {
